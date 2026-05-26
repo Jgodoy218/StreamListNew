@@ -111,7 +111,13 @@ with st.sidebar:
     st.markdown("## 🏠 Características")
     st.markdown("---")
     area_gf = st.slider("Área habitable (ft²)", 400, 5000, 1500, 50)
-    calidad = st.select_slider("Calidad general (1–10)", list(range(1,11)), value=6)
+    # FIX 1: select_slider con strings para evitar problemas de tipo
+    calidad = st.select_slider(
+        "Calidad general (1–10)",
+        options=[str(i) for i in range(1, 11)],
+        value="6"
+    )
+    calidad = int(calidad)
     anio    = st.slider("Año de construcción", 1900, 2010, 1975)
     banos   = st.selectbox("Baños completos", [1,2,3,4], index=1)
     garage  = st.selectbox("Capacidad garaje (autos)", [0,1,2,3], index=2)
@@ -193,14 +199,14 @@ with tab1:
             opacity=0.9,
             hovertemplate='$%{x:,.0f}<br>Cantidad: %{y}<extra></extra>'
         ))
+        # FIX 2: eliminar annotation_bgcolor que no existe en add_vline
         fig.add_vline(x=precio_pred, line_dash="dash", line_color=ROJO, line_width=2,
                       annotation_text=f"Tu vivienda<br>${precio_pred:,.0f}",
-                      annotation_font_color=ROJO, annotation_font_size=11,
-                      annotation_bgcolor=BG)
+                      annotation_font_color=ROJO, annotation_font_size=11)
         fig.add_vline(x=precio_prom, line_dash="dot", line_color=VERDE, line_width=2,
                       annotation_text=f"Promedio<br>${precio_prom:,.0f}",
                       annotation_font_color=VERDE, annotation_font_size=11,
-                      annotation_position="top left", annotation_bgcolor=BG)
+                      annotation_position="top left")
         lo = layout_oscuro("Distribución de precios de venta", 390)
         lo['xaxis']['tickformat'] = "$,.0f"
         lo['xaxis']['title'] = "Precio de venta (USD)"
@@ -298,12 +304,11 @@ with tab3:
     fig4.update_layout(**lo4)
     st.plotly_chart(fig4, use_container_width=True)
 
-    st.dataframe(
-        stats_b.sort_values('Precio promedio', ascending=False)
-               .style.format({'Precio promedio':'${:,.0f}','Precio mediano':'${:,.0f}'})
-               .background_gradient(subset=['Precio promedio'], cmap='Blues'),
-        use_container_width=True, height=320
-    )
+    # FIX 3: eliminar background_gradient (requiere matplotlib); usar format simple
+    tabla = stats_b.sort_values('Precio promedio', ascending=False).copy()
+    tabla['Precio promedio'] = tabla['Precio promedio'].apply(lambda x: f"${x:,.0f}")
+    tabla['Precio mediano']  = tabla['Precio mediano'].apply(lambda x: f"${x:,.0f}")
+    st.dataframe(tabla, use_container_width=True, height=320)
 
 # ── TAB 4 ──────────────────────────────────────────────────────────────────────
 with tab4:
